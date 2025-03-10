@@ -79,7 +79,7 @@ Para comenzar con el examen, deberá configurar el entorno de pruebas siguiendo 
    python -m venv venv
 
    # En Windows
-   nv\Scripts\activate
+   venv\Scripts\activate
 
    # En macOS/Linux
    source venv/bin/activate
