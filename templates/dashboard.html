@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BJI - Panel de Control</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <div class="logo">
+                <h1>BJI</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Casos</a></li>
+                    <li><a href="#">Clientes</a></li>
+                    <li><a href="#">Usuarios</a></li>
+                    <li><a href="#">Reportes</a></li>
+                    <li><a href="/" class="logout">Salir</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="dashboard-header">
+                <h2>Panel de Control</h2>
+                <div class="actions">
+                    <button id="btn-search">Buscar</button>
+                    <button class="primary" id="btn-casos-confidenciales">Ver Casos Confidenciales</button>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="card">
+                    <h3>Casos Activos</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Estado</th>
+                                    <th>Cliente</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in cases %}
+                                <tr>
+                                    <td>{{ case[0] }}</td>
+                                    <td>{{ case[1] }}</td>
+                                    <td>{{ case[2] }}</td>
+                                    <td>{{ case[3] }}</td>
+                                    <td>
+                                        <button class="btn-view" data-id="{{ case[0] }}">Ver</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" id="case-details" style="display: none;">
+                    <h3 id="case-title">Detalles del Caso</h3>
+                    <div id="case-content">
+                        <!-- Los detalles del caso se cargarán aquí -->
+                    </div>
+                </div>
+
+                <div class="card" id="confidential-notes" style="display: none;">
+                    <h3>Notas Confidenciales</h3>
+                    <div id="notes-content">
+                        <!-- Las notas confidenciales se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Botones para ver detalles de caso
+            const viewButtons = document.querySelectorAll('.btn-view');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const caseId = this.getAttribute('data-id');
+                    fetchCaseDetails(caseId);
+                });
+            });
+
+            // Botón para casos confidenciales
+            const btnConfidential = document.getElementById('btn-casos-confidenciales');
+            btnConfidential.addEventListener('click', function() {
+                fetchConfidentialCases();
+            });
+        });
+
+        function fetchCaseDetails(caseId) {
+            fetch(`/api/cases?case_id=${caseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data.length > 0) {
+                        const caseData = data.data[0];
+                        displayCaseDetails(caseData);
+
+                        // Intentar obtener notas confidenciales
+                        fetchCaseNotes(caseId);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayCaseDetails(caseData) {
+            const caseDetails = document.getElementById('case-details');
+            const caseTitle = document.getElementById('case-title');
+            const caseContent = document.getElementById('case-content');
+
+            caseTitle.textContent = `Caso: ${caseData.title}`;
+
+            caseContent.innerHTML = `
+                <p><strong>ID:</strong> ${caseData.id}</p>
+                <p><strong>Descripción:</strong> ${caseData.description}</p>
+                <p><strong>Estado:</strong> ${caseData.status}</p>
+                <p><strong>Cliente ID:</strong> ${caseData.client_id}</p>
+                <p><strong>Asignado a:</strong> ${caseData.assigned_to}</p>
+                <p><strong>Confidencial:</strong> ${caseData.confidential ? 'Sí' : 'No'}</p>
+            `;
+
+            caseDetails.style.display = 'block';
+        }
+
+        function fetchCaseNotes(caseId) {
+            fetch(`/api/notes?case_id=${caseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data.length > 0) {
+                        displayCaseNotes(data.data);
+                    } else {
+                        const notesDiv = document.getElementById('confidential-notes');
+                        notesDiv.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayCaseNotes(notes) {
+            const notesDiv = document.getElementById('confidential-notes');
+            const notesContent = document.getElementById('notes-content');
+
+            notesContent.innerHTML = '';
+
+            notes.forEach(note => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.innerHTML = `
+                    <p class="note-content">${note.content}</p>
+                    <p class="note-date">${note.created_at}</p>
+                `;
+                notesContent.appendChild(noteElement);
+            });
+
+            notesDiv.style.display = 'block';
+        }
+
+        function fetchConfidentialCases() {
+            // Esto intentará obtener todos los casos, incluyendo los confidenciales
+            fetch('/api/cases')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Filtrar solo los casos confidenciales
+                        const confidentialCases = data.data.filter(c => c.confidential === 1);
+                        updateCasesTable(confidentialCases);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateCasesTable(cases) {
+            const tableBody = document.querySelector('tbody');
+            tableBody.innerHTML = '';
+
+            cases.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${c.id}</td>
+                    <td>${c.title}</td>
+                    <td>${c.status}</td>
+                    <td>${c.client_id}</td>
+                    <td>
+                        <button class="btn-view" data-id="${c.id}">Ver</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Volver a agregar event listeners
+            const viewButtons = document.querySelectorAll('.btn-view');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const caseId = this.getAttribute('data-id');
+                    fetchCaseDetails(caseId);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
