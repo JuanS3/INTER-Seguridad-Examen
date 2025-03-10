@@ -69,8 +69,8 @@ Para comenzar con el examen, deberá configurar el entorno de pruebas siguiendo 
 1. **Clonar el repositorio**:
 
    ```bash
-   git clone https://github.com/bji-legal-cases/security-assessment.git
-   cd security-assessment
+   git clone https://github.com/JuanS3/INTER-Seguridad-Examen.git
+   cd INTER-Seguridad-Examen
    ```
 
 2. **Crear un entorno virtual de Python**:
