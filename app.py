@@ -1,12 +1,12 @@
 # app.py
-# from fastapi import FastAPI, Request, Form
-# from fastapi.responses import HTMLResponse, RedirectResponse
-# from fastapi.templating import Jinja2Templates
-# from fastapi.staticfiles import StaticFiles
-# from fastapi.security import HTTPBasic
-# import sqlite3
-# import os
-# import uvicorn
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBasic
+import sqlite3
+import os
+import uvicorn
 
 app = FastAPI(title="Sistema de Gestión de Casos Legales - BJI")
 
